@@ -1,11 +1,11 @@
 package study.datajpa.repository;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 import study.datajpa.entity.Member;
 
@@ -21,6 +21,23 @@ public class MemberRepositoryTest {
     @Autowired
     private MemberRepository memberRepository;
     private Logger log = LoggerFactory.getLogger(MemberRepositoryTest.class);
+
+    private Member memberA;
+    private Member memberB;
+    private Member memberC;
+    private Member savedMemberA;
+    private Member savedMemberB;
+    private Member savedMemberC;
+
+    @BeforeEach
+    void setUp() {
+        memberA = Member.builder().username("usernameA").age(10).build();
+        memberB = Member.builder().username("usernameB").age(20).build();
+        memberC = Member.builder().username("usernameC").age(30).build();
+        savedMemberA = memberRepository.save(memberA);
+        savedMemberB = memberRepository.save(memberB);
+        savedMemberC = memberRepository.save(memberC);
+    }
 
     @Test
     void memberJoinTest() {
@@ -56,12 +73,6 @@ public class MemberRepositoryTest {
     @Test
     void memberFindAllTest() {
         //given
-        Member memberA = Member.builder().username("usernameA").build();
-        Member memberB = Member.builder().username("usernameB").build();
-        Member memberC = Member.builder().username("usernameC").build();
-        Member savedMemberA = memberRepository.save(memberA);
-        Member savedMemberB = memberRepository.save(memberB);
-        Member savedMemberC = memberRepository.save(memberC);
         Member[] expected = {savedMemberA, savedMemberB, savedMemberC};
         //when
         List<Member> actual = memberRepository.findAll();
@@ -72,12 +83,6 @@ public class MemberRepositoryTest {
     @Test
     void memberFindByIdTest() {
         //given
-        Member memberA = Member.builder().username("usernameA").build();
-        Member memberB = Member.builder().username("usernameB").build();
-        Member memberC = Member.builder().username("usernameC").build();
-        Member savedMemberA = memberRepository.save(memberA);
-        Member savedMemberB = memberRepository.save(memberB);
-        Member savedMemberC = memberRepository.save(memberC);
         //when
         Optional<Member> actual = memberRepository.findById(memberA.getId());
         //then
@@ -87,12 +92,6 @@ public class MemberRepositoryTest {
     @Test
     void memberFindByIdNotFoundTest() {
         //given
-        Member memberA = Member.builder().username("usernameA").build();
-        Member memberB = Member.builder().username("usernameB").build();
-        Member memberC = Member.builder().username("usernameC").build();
-        Member savedMemberA = memberRepository.save(memberA);
-        Member savedMemberB = memberRepository.save(memberB);
-        Member savedMemberC = memberRepository.save(memberC);
         //when
         Optional<Member> actual = memberRepository.findById(100L);
         //then
@@ -102,16 +101,46 @@ public class MemberRepositoryTest {
     @Test
     void memberCountTest() {
         //given
-        Member memberA = Member.builder().username("usernameA").build();
-        Member memberB = Member.builder().username("usernameB").build();
-        Member memberC = Member.builder().username("usernameC").build();
-        Member savedMemberA = memberRepository.save(memberA);
-        Member savedMemberB = memberRepository.save(memberB);
-        Member savedMemberC = memberRepository.save(memberC);
         Long expected = 3L;
         //when
         Long actual = memberRepository.count();
         //then
         assertThat(actual).isEqualTo(expected);
+    }
+
+    @Test
+    void memberFindByUsernameAndAgeGreaterThanTest() {
+        //given
+        Member memberUnderFifteen = Member.builder().username("AA").age(10).build();
+        Member memberOverFifteen = Member.builder().username("AA").age(20).build();
+        memberRepository.save(memberUnderFifteen);
+        memberRepository.save(memberOverFifteen);
+        Member[] expected = {memberOverFifteen};
+        //when
+        /*No property 'username2' found for type 'Member' Did you mean ''username''
+        List<Member> actual = memberRepository.findByUsername2AndAgeGreaterThan("AA", 15);*/
+        List<Member> actual = memberRepository.findByUsernameAndAgeGreaterThan("AA", 15);
+        //then
+        assertThat(actual).containsExactly(expected);
+    }
+
+    @Test
+    void memberFindHelloByTest() {
+        //given
+        Member[] expected = {memberA, memberB, memberC};
+        //when
+        List<Member> actual = memberRepository.findHelloBy();
+        //then
+        assertThat(actual).containsExactly(expected);
+    }
+
+    @Test
+    void memberFindFirst2Test() {
+        //given
+        Member[] expected = {memberA, memberB};
+        //when
+        List<Member> actual = memberRepository.findFirst2By();
+        //then
+        assertThat(actual).containsExactly(expected);
     }
 }

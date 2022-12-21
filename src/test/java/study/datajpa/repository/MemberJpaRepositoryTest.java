@@ -1,5 +1,6 @@
 package study.datajpa.repository;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -19,6 +20,22 @@ public class MemberJpaRepositoryTest {
     @Autowired
     private MemberJpaRepository memberJpaRepository;
 
+    private Member memberA;
+    private Member memberB;
+    private Member memberC;
+    private Member savedMemberA;
+    private Member savedMemberB;
+    private Member savedMemberC;
+    @BeforeEach
+    void setUp() {
+        memberA = Member.builder().username("usernameA").age(10).build();
+        memberB = Member.builder().username("usernameB").age(20).build();
+        memberC = Member.builder().username("usernameC").age(30).build();
+        savedMemberA = memberJpaRepository.save(memberA);
+        savedMemberB = memberJpaRepository.save(memberB);
+        savedMemberC = memberJpaRepository.save(memberC);
+    }
+
     @Test
     void memberJoinTest() {
         //given
@@ -36,10 +53,10 @@ public class MemberJpaRepositoryTest {
     void memberDeleteTest() {
         //given
         Member memberA = Member.builder().username("usernameA").build();
-        Member savedMember = memberJpaRepository.save(memberA);
+        Member savedMemberA = memberJpaRepository.save(memberA);
         //when
-        memberJpaRepository.delete(savedMember);
-        Member findMember = memberJpaRepository.find(savedMember.getId());
+        memberJpaRepository.delete(savedMemberA);
+        Member findMember = memberJpaRepository.find(savedMemberA.getId());
         //then
         assertThat(findMember).isNull();
     }
@@ -47,12 +64,6 @@ public class MemberJpaRepositoryTest {
     @Test
     void memberFindAllTest() {
         //given
-        Member memberA = Member.builder().username("usernameA").build();
-        Member memberB = Member.builder().username("usernameB").build();
-        Member memberC = Member.builder().username("usernameC").build();
-        Member savedMemberA = memberJpaRepository.save(memberA);
-        Member savedMemberB = memberJpaRepository.save(memberB);
-        Member savedMemberC = memberJpaRepository.save(memberC);
         Member[] expected = {savedMemberA, savedMemberB, savedMemberC};
         //when
         List<Member> actual = memberJpaRepository.findAll();
@@ -63,12 +74,6 @@ public class MemberJpaRepositoryTest {
     @Test
     void memberFindByIdTest() {
         //given
-        Member memberA = Member.builder().username("usernameA").build();
-        Member memberB = Member.builder().username("usernameB").build();
-        Member memberC = Member.builder().username("usernameC").build();
-        Member savedMemberA = memberJpaRepository.save(memberA);
-        Member savedMemberB = memberJpaRepository.save(memberB);
-        Member savedMemberC = memberJpaRepository.save(memberC);
         //when
         Optional<Member> actual = memberJpaRepository.findById(memberA.getId());
         //then
@@ -78,12 +83,6 @@ public class MemberJpaRepositoryTest {
     @Test
     void memberFindByIdNotFoundTest() {
         //given
-        Member memberA = Member.builder().username("usernameA").build();
-        Member memberB = Member.builder().username("usernameB").build();
-        Member memberC = Member.builder().username("usernameC").build();
-        Member savedMemberA = memberJpaRepository.save(memberA);
-        Member savedMemberB = memberJpaRepository.save(memberB);
-        Member savedMemberC = memberJpaRepository.save(memberC);
         //when
         Optional<Member> actual = memberJpaRepository.findById(100L);
         //then
@@ -93,16 +92,20 @@ public class MemberJpaRepositoryTest {
     @Test
     void memberCountTest() {
         //given
-        Member memberA = Member.builder().username("usernameA").build();
-        Member memberB = Member.builder().username("usernameB").build();
-        Member memberC = Member.builder().username("usernameC").build();
-        Member savedMemberA = memberJpaRepository.save(memberA);
-        Member savedMemberB = memberJpaRepository.save(memberB);
-        Member savedMemberC = memberJpaRepository.save(memberC);
         Long expected = 3L;
         //when
         Long actual = memberJpaRepository.count();
         //then
         assertThat(actual).isEqualTo(expected);
+    }
+
+    @Test
+    void memberFindByUsernameAndAgeGreaterThanTest() {
+        //given
+        Member[] expected = {memberB};
+        //when
+        List<Member> actual = memberJpaRepository.findByUsernameAndAgeGreaterThan(memberB.getUsername(), 15);
+        //then
+        assertThat(actual).containsExactly(expected);
     }
 }
