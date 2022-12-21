@@ -1,11 +1,10 @@
 package study.datajpa.repository;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
-import study.datajpa.entity.Member;
 import study.datajpa.entity.Team;
 
 import java.util.List;
@@ -16,17 +15,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
 @Transactional
 //@Rollback(value = false)
-public class TeamJpaRepositoryTest {
+public class TeamRepositoryTest {
     @Autowired
-    private TeamJpaRepository teamJpaRepository;
+    private TeamRepository teamRepository;
+    private Team noTeam;
+
+    @BeforeEach
+    void setUp() {
+        noTeam = Team.builder().name("noTeam").build();
+    }
 
     @Test
     void teamJoinTest() {
         //given
         Team team = Team.builder().name("teamA").build();
         //when
-        Team savedMember = teamJpaRepository.save(team);
-        Team findMember = teamJpaRepository.find(savedMember.getId());
+        Team savedMember = teamRepository.save(team);
+        Team findMember = teamRepository.findById(savedMember.getId()).orElseGet(() -> noTeam);
         //then
         assertThat(team.getId()).isEqualTo(findMember.getId());
         assertThat(team.getName()).isEqualTo(findMember.getName());
@@ -37,12 +42,12 @@ public class TeamJpaRepositoryTest {
     void teamDeleteTest() {
         //given
         Team teamA = Team.builder().name("teamA").build();
-        Team savedTeam = teamJpaRepository.save(teamA);
+        Team savedTeam = teamRepository.save(teamA);
         //when
-        teamJpaRepository.delete(savedTeam);
-        Team findTeam = teamJpaRepository.find(savedTeam.getId());
+        teamRepository.delete(savedTeam);
+        Team findTeam = teamRepository.findById(savedTeam.getId()).orElseGet(() -> noTeam);
         //then
-        assertThat(findTeam).isNull();
+        assertThat(findTeam).isEqualTo(noTeam);
     }
 
     @Test
@@ -51,12 +56,12 @@ public class TeamJpaRepositoryTest {
         Team teamA = Team.builder().name("teamA").build();
         Team teamB = Team.builder().name("teamB").build();
         Team teamC = Team.builder().name("teamC").build();
-        Team savedTeamA = teamJpaRepository.save(teamA);
-        Team savedTeamB = teamJpaRepository.save(teamB);
-        Team savedTeamC = teamJpaRepository.save(teamC);
+        Team savedTeamA = teamRepository.save(teamA);
+        Team savedTeamB = teamRepository.save(teamB);
+        Team savedTeamC = teamRepository.save(teamC);
         Team[] expected = {savedTeamA, savedTeamB, savedTeamC};
         //when
-        List<Team> actual = teamJpaRepository.findAll();
+        List<Team> actual = teamRepository.findAll();
         //then
         assertThat(actual).containsExactly(expected);
     }
@@ -67,11 +72,11 @@ public class TeamJpaRepositoryTest {
         Team teamA = Team.builder().name("teamA").build();
         Team teamB = Team.builder().name("teamB").build();
         Team teamC = Team.builder().name("teamC").build();
-        Team savedTeamA = teamJpaRepository.save(teamA);
-        Team savedTeamB = teamJpaRepository.save(teamB);
-        Team savedTeamC = teamJpaRepository.save(teamC);
+        Team savedTeamA = teamRepository.save(teamA);
+        Team savedTeamB = teamRepository.save(teamB);
+        Team savedTeamC = teamRepository.save(teamC);
         //when
-        Optional<Team> actual = teamJpaRepository.findById(teamA.getId());
+        Optional<Team> actual = teamRepository.findById(teamA.getId());
         //then
         assertThat(actual).isEqualTo(Optional.ofNullable(teamA));
     }
@@ -82,11 +87,11 @@ public class TeamJpaRepositoryTest {
         Team teamA = Team.builder().name("teamA").build();
         Team teamB = Team.builder().name("teamB").build();
         Team teamC = Team.builder().name("teamC").build();
-        Team savedTeamA = teamJpaRepository.save(teamA);
-        Team savedTeamB = teamJpaRepository.save(teamB);
-        Team savedTeamC = teamJpaRepository.save(teamC);
+        Team savedTeamA = teamRepository.save(teamA);
+        Team savedTeamB = teamRepository.save(teamB);
+        Team savedTeamC = teamRepository.save(teamC);
         //when
-        Optional<Team> actual = teamJpaRepository.findById(100L);
+        Optional<Team> actual = teamRepository.findById(100L);
         //then
         assertThat(actual).isEqualTo(Optional.empty());
     }
@@ -97,12 +102,12 @@ public class TeamJpaRepositoryTest {
         Team teamA = Team.builder().name("teamA").build();
         Team teamB = Team.builder().name("teamB").build();
         Team teamC = Team.builder().name("teamC").build();
-        Team savedTeamA = teamJpaRepository.save(teamA);
-        Team savedTeamB = teamJpaRepository.save(teamB);
-        Team savedTeamC = teamJpaRepository.save(teamC);
+        Team savedTeamA = teamRepository.save(teamA);
+        Team savedTeamB = teamRepository.save(teamB);
+        Team savedTeamC = teamRepository.save(teamC);
         Long expected = 3L;
         //when
-        Long actual = teamJpaRepository.count();
+        Long actual = teamRepository.count();
         //then
         assertThat(actual).isEqualTo(expected);
     }
