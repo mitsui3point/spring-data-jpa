@@ -1,5 +1,6 @@
 package study.datajpa.repository;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -11,16 +12,21 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
+import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 import study.datajpa.dto.MemberDto;
 import study.datajpa.entity.Member;
 import study.datajpa.entity.Team;
 
+import javax.persistence.EntityManager;
 import javax.persistence.NonUniqueResultException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
@@ -32,6 +38,8 @@ public class MemberRepositoryTest {
     private MemberRepository memberRepository;
     @Autowired
     private TeamRepository teamRepository;
+    @Autowired
+    private EntityManager em;
     private Logger log = LoggerFactory.getLogger(MemberRepositoryTest.class);
 
     private Member noResultMember;
@@ -417,4 +425,31 @@ public class MemberRepositoryTest {
         assertThat(actual).isEqualTo(expected);
     }
 
+    @Test
+    void memberBulkAgePlusTest() {
+        //given
+        int age = 10;
+        //when
+        List<Member> findMember = memberRepository.findAll()
+                .stream()
+                .filter(member -> member.getAge() >= age)
+                .collect(toList());
+        Map<Long, Integer> expectedMembers = findMember.stream()
+                .collect(toMap(
+                        Member::getId,
+                        Member::getAge));
+
+        int updatedCount = memberRepository.bulkAgePlus(age);//JPQL 실행 후 DBMS 에는 변경사항이 반영됨(em.flush())
+
+        //then
+        findMember.stream()
+                .map(Member::getId)
+                .forEach(memberId -> {
+                    Member actualMember = memberRepository.findById(memberId).orElseGet(() -> noResultMember);
+                    int actual = actualMember.getAge();
+                    int expected = expectedMembers.get(memberId) + 1;
+                    assertThat(actual).isEqualTo(expected);
+                });
+        assertThat(updatedCount).isEqualTo(3);
+    }
 }

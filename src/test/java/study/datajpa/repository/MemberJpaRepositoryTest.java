@@ -4,13 +4,18 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 import study.datajpa.entity.Member;
 
+import javax.persistence.EntityManager;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
@@ -20,6 +25,9 @@ public class MemberJpaRepositoryTest {
     @Autowired
     private MemberJpaRepository memberJpaRepository;
 
+    @Autowired
+    private EntityManager em;
+    private Member noResultMember;
     private Member memberA;
     private Member memberB;
     private Member memberC;
@@ -29,6 +37,7 @@ public class MemberJpaRepositoryTest {
 
     @BeforeEach
     void setUp() {
+        noResultMember = Member.builder().username("noResult").build();
         memberA = Member.builder().username("usernameA").age(10).build();
         memberB = Member.builder().username("usernameB").age(20).build();
         memberC = Member.builder().username("usernameC").age(30).build();
@@ -150,5 +159,34 @@ public class MemberJpaRepositoryTest {
         assertThat(actual).isEqualTo(expected);
         assertThat(actual.size()).isEqualTo(3);
         assertThat(actualTotalCount).isEqualTo(expectedTotalCount);
+    }
+
+    @Test
+    void memberBulkAgePlusTest() {
+        //given
+        int age = 10;
+        //when
+        List<Member> findMember = memberJpaRepository.findAll()
+                .stream()
+                .filter(member -> member.getAge() >= age)
+                .collect(toList());
+        Map<Long, Integer> expectedMembers = findMember.stream()
+                .collect(toMap(
+                        Member::getId,
+                        Member::getAge));
+
+        int updatedCount = memberJpaRepository.bulkAgePlus(age);//JPQL 실행 후 DBMS 에는 변경사항이 반영됨(em.flush())
+        em.clear();//영속성 컨텍스트 캐시 초기화(벌크 연산 이후 영속성 컨텍스트를 초기화 후, 재조회 해야 반영된 결과를 조회할 수 있다.)
+
+        //then
+        findMember.stream()
+                .map(Member::getId)
+                .forEach(memberId -> {
+                    Member actualMember = memberJpaRepository.findById(memberId).orElseGet(() -> noResultMember);
+                    int actual = actualMember.getAge();
+                    int expected = expectedMembers.get(memberId) + 1;
+                    assertThat(actual).isEqualTo(expected);
+                });
+        assertThat(updatedCount).isEqualTo(3);
     }
 }
