@@ -9,6 +9,10 @@ import java.util.Objects;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @ToString(of = {"id", "username", "age"})
+@NamedQuery(
+        name = "Member.findByUsername",
+        query = "select m from Member m where m.username = :username " //em.createQuery 와 달리 compile time 구문 error 체킹 가능
+)
 public class Member {
     @Id
     @GeneratedValue
@@ -42,7 +46,7 @@ public class Member {
         if (o == null || getClass() != o.getClass()) return false;
         Member member = (Member) o;
         return getAge() == member.getAge() && Objects.equals(getId(), member.getId()) && Objects.equals(getUsername(), member.getUsername());
-                //&& Objects.equals(getTeam(), member.getTeam());
+        //&& Objects.equals(getTeam(), member.getTeam());
     }
 
     @Override

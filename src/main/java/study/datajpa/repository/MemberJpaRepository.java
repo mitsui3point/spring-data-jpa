@@ -43,9 +43,17 @@ public class MemberJpaRepository {
     }
 
     public List<Member> findByUsernameAndAgeGreaterThan(String username, int age) {
+        /*  em.createNamedQuery 와 달리 compile time 에서 구문 error 체킹 불가능, runtime 시 call 할 경우 error
+        return em.createQuery("select m from Member m where m.usernavadvsvme = :username and m.age > :age ", Member.class)*/
         return em.createQuery("select m from Member m where m.username = :username and m.age > :age ", Member.class)
                 .setParameter("username", username)
                 .setParameter("age", age)
+                .getResultList();
+    }
+
+    public List<Member> findByUsername(String username) {
+        return em.createNamedQuery("Member.findByUsername", Member.class)
+                .setParameter("username", username)
                 .getResultList();
     }
 }

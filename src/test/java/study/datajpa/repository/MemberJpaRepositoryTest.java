@@ -108,4 +108,18 @@ public class MemberJpaRepositoryTest {
         //then
         assertThat(actual).containsExactly(expected);
     }
+
+    @Test
+    void memberNamedQueryTest() {
+        //given
+        Member mem1 = Member.builder().username("AA").age(12).build();
+        Member mem2 = Member.builder().username("AA").age(33).build();
+        memberJpaRepository.save(mem1);
+        memberJpaRepository.save(mem2);
+        Member[] expected = {mem1, mem2};
+        //when
+        List<Member> actual = memberJpaRepository.findByUsername("AA");
+        //then
+        assertThat(actual).containsExactly(expected);
+    }
 }

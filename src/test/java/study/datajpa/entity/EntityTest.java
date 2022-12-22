@@ -56,4 +56,5 @@ public class EntityTest {
             assertThat(member.getTeam()).isEqualTo(teamB);
         }
     }
+
 }
