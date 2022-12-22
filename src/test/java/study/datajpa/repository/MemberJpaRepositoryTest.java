@@ -125,7 +125,7 @@ public class MemberJpaRepositoryTest {
     }
 
     @Test
-    void findByPageTest() {
+    void findPageByAgeTest() {
         //given
         int offset = 1;
         int limit = 3;
@@ -144,7 +144,7 @@ public class MemberJpaRepositoryTest {
         long expectedTotalCount = Arrays.asList(memberA, mem5, mem4, mem3, mem2, mem1).stream().count();
 
         //when
-        List<Member> actual = memberJpaRepository.findByPage(age, offset, limit);
+        List<Member> actual = memberJpaRepository.findPageByAge(age, offset, limit);
         long actualTotalCount = memberJpaRepository.totalCount(age);
         //then
         assertThat(actual).isEqualTo(expected);

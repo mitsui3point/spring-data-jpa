@@ -7,6 +7,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
+import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 import study.datajpa.dto.MemberDto;
 import study.datajpa.entity.Member;
@@ -308,5 +313,92 @@ public class MemberRepositoryTest {
         }).withCauseExactlyInstanceOf(NonUniqueResultException.class);
     }
 
+    @Test
+    void findPagingByAgeTest() {
+        //given
+        int limit = 3;
+        int age = 10;
+        Member mem1 = Member.builder().username("mem1").age(10).build();
+        Member mem2 = Member.builder().username("mem2").age(10).build();
+        Member mem3 = Member.builder().username("mem3").age(10).build();
+        Member mem4 = Member.builder().username("mem4").age(10).build();
+        Member mem5 = Member.builder().username("mem5").age(10).build();
+        saveMembers(mem1, mem2, mem3, mem4, mem5);
+        List<Member> expected = Arrays.asList(memberA, mem5, mem4);
+        long expectedTotalCount = Arrays.asList(memberA, mem5, mem4, mem3, mem2, mem1).stream().count();
+
+        findPageByAgeTest(limit, age, expected, expectedTotalCount);
+        findSliceByAgeTest(limit, age, expected);
+        findListByAgeTest(limit, age, expected);
+        findMemberAllCountByTest(limit, age, expected, expectedTotalCount);
+    }
+
+    //Page test
+    private void findPageByAgeTest(int limit, int age, List<Member> expected, long expectedTotalCount) {
+        //when
+        PageRequest pageRequest = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "username"));
+        Page<Member> actual = memberRepository.findPageByAge(age, pageRequest);
+        Page<MemberDto> memberDtos = actual.map(m -> new MemberDto(m.getId(), m.getUsername(), "tempTeam"));
+        //then
+        memberDtos.stream().forEach(memberDto -> log.info("memberDto : {}", memberDto));
+        assertThat(actual.getContent()).isEqualTo(expected);//조회된 데이터
+        assertThat(actual.getContent().size()).isEqualTo(expected.size());//조회된 데이터수
+        assertThat(actual.getTotalElements()).isEqualTo(expectedTotalCount);//전체 데이터수
+        assertThat(actual.getNumber()).isEqualTo(0);//페이지 번호
+        assertThat(actual.getTotalPages()).isEqualTo(2);//전체 페이지 번호
+        assertThat(actual.isFirst()).isEqualTo(true);//첫번째 페이지인가?
+        assertThat(actual.isLast()).isEqualTo(false);//마지막 페이지인가?
+        assertThat(actual.hasPrevious()).isEqualTo(false);//이전페이지가 있는가?
+        assertThat(actual.hasNext()).isEqualTo(true);//다음페이지가 있는가?
+    }
+
+    //Slice test
+
+    private void findSliceByAgeTest(int limit, int age, List<Member> expected) {
+        //when
+        PageRequest pageRequest = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "username"));
+        Slice<Member> actual = memberRepository.findSliceByAge(age, pageRequest);
+        //then
+        assertThat(actual.getContent()).isEqualTo(expected);//조회된 데이터
+        assertThat(actual.getContent().size()).isEqualTo(expected.size());//조회된 데이터수
+        assertThat(actual.getNumber()).isEqualTo(0);//페이지 번호
+        assertThat(actual.isFirst()).isEqualTo(true);//첫번째 페이지인가?
+        assertThat(actual.isLast()).isEqualTo(false);//마지막 페이지인가?
+        assertThat(actual.hasPrevious()).isEqualTo(false);//이전페이지가 있는가?
+        assertThat(actual.hasNext()).isEqualTo(true);//다음페이지가 있는가?
+        //assertThat(actual.getTotalElements()).isEqualTo(expectedTotalCount);//전체 데이터수
+        //assertThat(actual.getTotalPages()).isEqualTo(2);//전체 페이지 번호
+    }
+
+    //Page Member left join Team test
+
+    private void findMemberAllCountByTest(int limit, int age, List<Member> expected, long expectedTotalCount) {
+        //when
+        PageRequest pageRequest = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "username"));
+        Page<Member> actual = memberRepository.findMemberAllCountBy(age, pageRequest);
+        //then
+        assertThat(actual.getContent()).isEqualTo(expected);//조회된 데이터
+        assertThat(actual.getContent().size()).isEqualTo(expected.size());//조회된 데이터수
+        assertThat(actual.getTotalElements()).isEqualTo(expectedTotalCount);//전체 데이터수
+        assertThat(actual.getNumber()).isEqualTo(0);//페이지 번호
+        assertThat(actual.getTotalPages()).isEqualTo(2);//전체 페이지 번호
+        assertThat(actual.isFirst()).isEqualTo(true);//첫번째 페이지인가?
+        assertThat(actual.isLast()).isEqualTo(false);//마지막 페이지인가?
+        assertThat(actual.hasPrevious()).isEqualTo(false);//이전페이지가 있는가?
+        assertThat(actual.hasNext()).isEqualTo(true);//다음페이지가 있는가?
+    }
+
+    //List Pageable parameter test
+    private void findListByAgeTest(int limit, int age, List<Member> expected) {
+        //when
+        PageRequest pageRequest = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "username"));
+        List<Member> actual = memberRepository.findListByAge(age, pageRequest);
+        //then
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    private void saveMembers(Member... members) {
+        Arrays.stream(members).forEach(member -> memberRepository.save(member));
+    }
 
 }
