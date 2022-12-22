@@ -4,7 +4,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 import study.datajpa.entity.Member;
 
@@ -27,6 +26,7 @@ public class MemberJpaRepositoryTest {
     private Member savedMemberA;
     private Member savedMemberB;
     private Member savedMemberC;
+
     @BeforeEach
     void setUp() {
         memberA = Member.builder().username("usernameA").age(10).build();
@@ -122,5 +122,33 @@ public class MemberJpaRepositoryTest {
         List<Member> actual = memberJpaRepository.findByUsername("AA");
         //then
         assertThat(actual).containsExactlyElementsOf(expected);
+    }
+
+    @Test
+    void findByPageTest() {
+        //given
+        int offset = 1;
+        int limit = 3;
+        int age = 10;
+        Member mem1 = Member.builder().username("mem1").age(10).build();
+        Member mem2 = Member.builder().username("mem2").age(10).build();
+        Member mem3 = Member.builder().username("mem3").age(10).build();
+        Member mem4 = Member.builder().username("mem4").age(10).build();
+        Member mem5 = Member.builder().username("mem5").age(10).build();
+        memberJpaRepository.save(mem1);
+        memberJpaRepository.save(mem2);
+        memberJpaRepository.save(mem3);
+        memberJpaRepository.save(mem4);
+        memberJpaRepository.save(mem5);
+        List<Member> expected = Arrays.asList(mem5, mem4, mem3);
+        long expectedTotalCount = Arrays.asList(memberA, mem5, mem4, mem3, mem2, mem1).stream().count();
+
+        //when
+        List<Member> actual = memberJpaRepository.findByPage(age, offset, limit);
+        long actualTotalCount = memberJpaRepository.totalCount(age);
+        //then
+        assertThat(actual).isEqualTo(expected);
+        assertThat(actual.size()).isEqualTo(3);
+        assertThat(actualTotalCount).isEqualTo(expectedTotalCount);
     }
 }
