@@ -11,7 +11,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
-import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 import study.datajpa.dto.MemberDto;
 import study.datajpa.entity.Member;
@@ -43,8 +42,18 @@ public class MemberRepositoryTest {
     private Member savedMemberB;
     private Member savedMemberC;
 
+    private Member mem1;
+    private Member mem2;
+    private Member mem3;
+    private Member mem4;
+    private Member mem5;
+
     @BeforeEach
     void setUp() {
+        init();
+    }
+
+    private void init() {
         noResultMember = Member.builder().username("noResultMember").build();
         memberA = Member.builder().username("usernameA").age(10).build();
         memberB = Member.builder().username("usernameB").age(20).build();
@@ -52,6 +61,15 @@ public class MemberRepositoryTest {
         savedMemberA = memberRepository.save(memberA);
         savedMemberB = memberRepository.save(memberB);
         savedMemberC = memberRepository.save(memberC);
+    }
+
+    private void membersDataSave() {
+        mem1 = Member.builder().username("mem1").age(10).build();
+        mem2 = Member.builder().username("mem2").age(10).build();
+        mem3 = Member.builder().username("mem3").age(10).build();
+        mem4 = Member.builder().username("mem4").age(10).build();
+        mem5 = Member.builder().username("mem5").age(10).build();
+        Arrays.stream(new Member[]{mem1, mem2, mem3, mem4, mem5}).forEach(member -> memberRepository.save(member));
     }
 
     @Test
@@ -314,27 +332,13 @@ public class MemberRepositoryTest {
     }
 
     @Test
-    void findPagingByAgeTest() {
+    void memberFindPageByAgeTest() {
         //given
         int limit = 3;
         int age = 10;
-        Member mem1 = Member.builder().username("mem1").age(10).build();
-        Member mem2 = Member.builder().username("mem2").age(10).build();
-        Member mem3 = Member.builder().username("mem3").age(10).build();
-        Member mem4 = Member.builder().username("mem4").age(10).build();
-        Member mem5 = Member.builder().username("mem5").age(10).build();
-        saveMembers(mem1, mem2, mem3, mem4, mem5);
+        membersDataSave();
         List<Member> expected = Arrays.asList(memberA, mem5, mem4);
         long expectedTotalCount = Arrays.asList(memberA, mem5, mem4, mem3, mem2, mem1).stream().count();
-
-        findPageByAgeTest(limit, age, expected, expectedTotalCount);
-        findSliceByAgeTest(limit, age, expected);
-        findListByAgeTest(limit, age, expected);
-        findMemberAllCountByTest(limit, age, expected, expectedTotalCount);
-    }
-
-    //Page test
-    private void findPageByAgeTest(int limit, int age, List<Member> expected, long expectedTotalCount) {
         //when
         PageRequest pageRequest = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "username"));
         Page<Member> actual = memberRepository.findPageByAge(age, pageRequest);
@@ -352,9 +356,14 @@ public class MemberRepositoryTest {
         assertThat(actual.hasNext()).isEqualTo(true);//다음페이지가 있는가?
     }
 
-    //Slice test
-
-    private void findSliceByAgeTest(int limit, int age, List<Member> expected) {
+    @Test
+    void memberFindSliceByAgeTest() {
+        //given
+        int limit = 3;
+        int age = 10;
+        membersDataSave();
+        List<Member> expected = Arrays.asList(memberA, mem5, mem4);
+        long expectedTotalCount = Arrays.asList(memberA, mem5, mem4, mem3, mem2, mem1).stream().count();
         //when
         PageRequest pageRequest = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "username"));
         Slice<Member> actual = memberRepository.findSliceByAge(age, pageRequest);
@@ -370,9 +379,14 @@ public class MemberRepositoryTest {
         //assertThat(actual.getTotalPages()).isEqualTo(2);//전체 페이지 번호
     }
 
-    //Page Member left join Team test
-
-    private void findMemberAllCountByTest(int limit, int age, List<Member> expected, long expectedTotalCount) {
+    @Test
+    void memberFindMemberAllCountByTest() {
+        //given
+        int limit = 3;
+        int age = 10;
+        membersDataSave();
+        List<Member> expected = Arrays.asList(memberA, mem5, mem4);
+        long expectedTotalCount = Arrays.asList(memberA, mem5, mem4, mem3, mem2, mem1).stream().count();
         //when
         PageRequest pageRequest = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "username"));
         Page<Member> actual = memberRepository.findMemberAllCountBy(age, pageRequest);
@@ -388,17 +402,19 @@ public class MemberRepositoryTest {
         assertThat(actual.hasNext()).isEqualTo(true);//다음페이지가 있는가?
     }
 
-    //List Pageable parameter test
-    private void findListByAgeTest(int limit, int age, List<Member> expected) {
+    @Test
+    void memberFindListByAgeTest() {
+        //given
+        int limit = 3;
+        int age = 10;
+        membersDataSave();
+        List<Member> expected = Arrays.asList(memberA, mem5, mem4);
+        long expectedTotalCount = Arrays.asList(memberA, mem5, mem4, mem3, mem2, mem1).stream().count();
         //when
         PageRequest pageRequest = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "username"));
         List<Member> actual = memberRepository.findListByAge(age, pageRequest);
         //then
         assertThat(actual).isEqualTo(expected);
-    }
-
-    private void saveMembers(Member... members) {
-        Arrays.stream(members).forEach(member -> memberRepository.save(member));
     }
 
 }
