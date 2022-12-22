@@ -6,16 +6,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.transaction.annotation.Transactional;
 import study.datajpa.dto.MemberDto;
 import study.datajpa.entity.Member;
 import study.datajpa.entity.Team;
 
+import javax.persistence.NonUniqueResultException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 @SpringBootTest
 @Transactional
@@ -27,6 +30,7 @@ public class MemberRepositoryTest {
     private TeamRepository teamRepository;
     private Logger log = LoggerFactory.getLogger(MemberRepositoryTest.class);
 
+    private Member noResultMember;
     private Member memberA;
     private Member memberB;
     private Member memberC;
@@ -36,6 +40,7 @@ public class MemberRepositoryTest {
 
     @BeforeEach
     void setUp() {
+        noResultMember = Member.builder().username("noResultMember").build();
         memberA = Member.builder().username("usernameA").age(10).build();
         memberB = Member.builder().username("usernameB").age(20).build();
         memberC = Member.builder().username("usernameC").age(30).build();
@@ -217,6 +222,90 @@ public class MemberRepositoryTest {
         //then
         actual.stream().forEach(member -> log.info("member = " + member));
         assertThat(actual).containsExactlyElementsOf(expected);
+    }
+
+    @Test
+    void memberFindListByUsernameTest() {
+        //given
+        List<Member> expected = Arrays.asList(memberA);
+
+        //when
+        List<Member> actual = memberRepository.findListByUsername(memberA.getUsername());
+        //then
+        actual.stream().forEach(member -> log.info("member = " + member));
+        assertThat(actual).containsExactlyElementsOf(expected);
+
+        //when
+        List<Member> actualEmpty = memberRepository.findListByUsername("");
+        //then
+        log.info("actualEmpty.size(): {}", actualEmpty.size());
+        assertThat(actualEmpty).isEmpty();
+        assertThat(actualEmpty).isNotNull();
+    }
+
+    @Test
+    void memberFindMemberByUsernameTest() {
+        //given
+        Member expected = memberA;
+
+        //when
+        Member actual = memberRepository.findMemberByUsername(memberA.getUsername());
+        //then
+        log.info("actual = {}", actual);
+        assertThat(actual).isEqualTo(expected);
+
+        /**
+         * 단건으로 지정한 메서드를 호출하면 스프링 데이터 JPA는 내부에서 JPQL의 Query.getSingleResult() 메서드를 호출한다.
+         * 이 메서드를 호출했을 때 조회 결과가 없으면 javax.persistence.NoResultException 예외가 발생하는데,
+         *      개발자 입장에서 다루기가 상당히 불편하다.
+         * 스프링 데이터 JPA는 단건을 조회할 때 이 예외가 발생하면,
+         *      예외를 무시하고 대신에 null 을 반환한다.
+         */
+        //when
+        Member actualNull = memberRepository.findMemberByUsername("");
+        //then
+        log.info("actualNull = {}", actualNull);
+        assertThat(actualNull).isNull();
+    }
+
+    @Test
+    void memberFindOptionalByUsernameTest() {
+        //given
+        Optional<Member> expected = Optional.of(memberA);
+        Member memberDuplicateB = Member.builder().username(memberB.getUsername()).age(memberB.getAge()).build();
+        memberRepository.save(memberDuplicateB);
+
+        //when
+        Optional<Member> actual = memberRepository.findOptionalByUsername(memberA.getUsername());
+        //then
+        log.info("actual = {}", actual);
+        log.info("expected = {}", expected);
+        assertThat(actual).isEqualTo(expected);
+
+        //when
+        Optional<Member> actualOptionalEmpty = memberRepository.findOptionalByUsername("");
+        //then
+        log.info("actualOptionalEmpty = {}", actualOptionalEmpty);
+        log.info("actualOptionalEmpty.orElseGet(() -> noResultMember) = {}", actualOptionalEmpty.orElseGet(() -> noResultMember));
+        assertThat(actualOptionalEmpty).isNotNull();
+        assertThat(actualOptionalEmpty).isEmpty();
+        assertThat(actualOptionalEmpty.orElseGet(() -> noResultMember)).isEqualTo(noResultMember);
+
+        /**
+         * jpa exception (NonUniqueResultException.class) =>
+         *      spring exception (IncorrectResultSizeDataAccessException.class) translation
+         *
+         *  ex) memberRepository 의 기술은 jpa 가 될수도 있고, mongoDB 등 다른 기술이 될 수 있다.
+         *      service 계층의 client code 들은 구현 기술에 의존하는게 아닌,
+         *      spring 이 추상화한 예외에 의존하게 해야,
+         *      구현 기술을 바꾸게 되더라도 일관된 spring 추상화 예외를 전달받을 수 있기 때문에,
+         *      client code 를 바꿀 필요가 없게 된다.
+         *      그러한 이점이 있기 때문에 spring 에서 exception 을 translation 하게 된다.
+         */
+        assertThatExceptionOfType(IncorrectResultSizeDataAccessException.class).isThrownBy(() -> {
+            //when
+            Optional<Member> actualDuplicate = memberRepository.findOptionalByUsername(memberB.getUsername());
+        }).withCauseExactlyInstanceOf(NonUniqueResultException.class);
     }
 
 }
