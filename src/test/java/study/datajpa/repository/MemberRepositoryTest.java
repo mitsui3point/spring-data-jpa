@@ -207,4 +207,16 @@ public class MemberRepositoryTest {
         actual.stream().forEach(memberDto -> log.info("memberDto = " + memberDto));
         assertThat(actual).containsExactlyElementsOf(expected);
     }
+
+    @Test
+    void memberFindByNamesTest() {
+        //given
+        List<Member> expected = Arrays.asList(memberA, memberB);
+        //when
+        List<Member> actual = memberRepository.findByNames(Arrays.asList(memberA.getUsername(), memberB.getUsername()));
+        //then
+        actual.stream().forEach(member -> log.info("member = " + member));
+        assertThat(actual).containsExactlyElementsOf(expected);
+    }
+
 }
