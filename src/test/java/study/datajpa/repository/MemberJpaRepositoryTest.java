@@ -8,6 +8,7 @@ import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 import study.datajpa.entity.Member;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -64,11 +65,11 @@ public class MemberJpaRepositoryTest {
     @Test
     void memberFindAllTest() {
         //given
-        Member[] expected = {savedMemberA, savedMemberB, savedMemberC};
+        List<Member> expected = Arrays.asList(savedMemberA, savedMemberB, savedMemberC);
         //when
         List<Member> actual = memberJpaRepository.findAll();
         //then
-        assertThat(actual).containsExactly(expected);
+        assertThat(actual).containsExactlyElementsOf(expected);
     }
 
     @Test
@@ -102,11 +103,11 @@ public class MemberJpaRepositoryTest {
     @Test
     void memberFindByUsernameAndAgeGreaterThanTest() {
         //given
-        Member[] expected = {memberB};
+        List<Member> expected = Arrays.asList(memberB);
         //when
         List<Member> actual = memberJpaRepository.findByUsernameAndAgeGreaterThan(memberB.getUsername(), 15);
         //then
-        assertThat(actual).containsExactly(expected);
+        assertThat(actual).containsExactlyElementsOf(expected);
     }
 
     @Test
@@ -116,10 +117,10 @@ public class MemberJpaRepositoryTest {
         Member mem2 = Member.builder().username("AA").age(33).build();
         memberJpaRepository.save(mem1);
         memberJpaRepository.save(mem2);
-        Member[] expected = {mem1, mem2};
+        List<Member> expected = Arrays.asList(mem1, mem2);
         //when
         List<Member> actual = memberJpaRepository.findByUsername("AA");
         //then
-        assertThat(actual).containsExactly(expected);
+        assertThat(actual).containsExactlyElementsOf(expected);
     }
 }

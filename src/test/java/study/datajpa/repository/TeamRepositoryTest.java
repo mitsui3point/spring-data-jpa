@@ -7,6 +7,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 import study.datajpa.entity.Team;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,11 +19,25 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class TeamRepositoryTest {
     @Autowired
     private TeamRepository teamRepository;
+
     private Team noTeam;
+    private Team teamA;
+    private Team teamB;
+    private Team teamC;
+    private Team savedTeamA;
+    private Team savedTeamB;
+    private Team savedTeamC;
 
     @BeforeEach
     void setUp() {
         noTeam = Team.builder().name("noTeam").build();
+
+        teamA = Team.builder().name("teamA").build();
+        teamB = Team.builder().name("teamB").build();
+        teamC = Team.builder().name("teamC").build();
+        savedTeamA = teamRepository.save(teamA);
+        savedTeamB = teamRepository.save(teamB);
+        savedTeamC = teamRepository.save(teamC);
     }
 
     @Test
@@ -53,28 +68,17 @@ public class TeamRepositoryTest {
     @Test
     void teamFindAllTest() {
         //given
-        Team teamA = Team.builder().name("teamA").build();
-        Team teamB = Team.builder().name("teamB").build();
-        Team teamC = Team.builder().name("teamC").build();
-        Team savedTeamA = teamRepository.save(teamA);
-        Team savedTeamB = teamRepository.save(teamB);
-        Team savedTeamC = teamRepository.save(teamC);
-        Team[] expected = {savedTeamA, savedTeamB, savedTeamC};
+        List<Team> expected = Arrays.asList(savedTeamA, savedTeamB, savedTeamC);
+        
         //when
         List<Team> actual = teamRepository.findAll();
         //then
-        assertThat(actual).containsExactly(expected);
+        assertThat(actual).containsExactlyElementsOf(expected);
     }
 
     @Test
     void teamFindByIdTest() {
         //given
-        Team teamA = Team.builder().name("teamA").build();
-        Team teamB = Team.builder().name("teamB").build();
-        Team teamC = Team.builder().name("teamC").build();
-        Team savedTeamA = teamRepository.save(teamA);
-        Team savedTeamB = teamRepository.save(teamB);
-        Team savedTeamC = teamRepository.save(teamC);
         //when
         Optional<Team> actual = teamRepository.findById(teamA.getId());
         //then
@@ -84,12 +88,6 @@ public class TeamRepositoryTest {
     @Test
     void teamFindByIdNotFoundTest() {
         //given
-        Team teamA = Team.builder().name("teamA").build();
-        Team teamB = Team.builder().name("teamB").build();
-        Team teamC = Team.builder().name("teamC").build();
-        Team savedTeamA = teamRepository.save(teamA);
-        Team savedTeamB = teamRepository.save(teamB);
-        Team savedTeamC = teamRepository.save(teamC);
         //when
         Optional<Team> actual = teamRepository.findById(100L);
         //then
@@ -99,12 +97,6 @@ public class TeamRepositoryTest {
     @Test
     void teamCountTest() {
         //given
-        Team teamA = Team.builder().name("teamA").build();
-        Team teamB = Team.builder().name("teamB").build();
-        Team teamC = Team.builder().name("teamC").build();
-        Team savedTeamA = teamRepository.save(teamA);
-        Team savedTeamB = teamRepository.save(teamB);
-        Team savedTeamC = teamRepository.save(teamC);
         Long expected = 3L;
         //when
         Long actual = teamRepository.count();

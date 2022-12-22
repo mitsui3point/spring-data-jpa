@@ -7,8 +7,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
+import study.datajpa.dto.MemberDto;
 import study.datajpa.entity.Member;
+import study.datajpa.entity.Team;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,6 +23,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class MemberRepositoryTest {
     @Autowired
     private MemberRepository memberRepository;
+    @Autowired
+    private TeamRepository teamRepository;
     private Logger log = LoggerFactory.getLogger(MemberRepositoryTest.class);
 
     private Member memberA;
@@ -73,11 +78,11 @@ public class MemberRepositoryTest {
     @Test
     void memberFindAllTest() {
         //given
-        Member[] expected = {savedMemberA, savedMemberB, savedMemberC};
+        List<Member> expected = Arrays.asList(savedMemberA, savedMemberB, savedMemberC);
         //when
         List<Member> actual = memberRepository.findAll();
         //then
-        assertThat(actual).containsExactly(expected);
+        assertThat(actual).containsExactlyElementsOf(expected);
     }
 
     @Test
@@ -115,13 +120,13 @@ public class MemberRepositoryTest {
         Member memberOverFifteen = Member.builder().username("AA").age(20).build();
         memberRepository.save(memberUnderFifteen);
         memberRepository.save(memberOverFifteen);
-        Member[] expected = {memberOverFifteen};
+        List<Member> expected = Arrays.asList(memberOverFifteen);
         //when
         /*No property 'username2' found for type 'Member' Did you mean ''username''
         List<Member> actual = memberRepository.findByUsername2AndAgeGreaterThan("AA", 15);*/
         List<Member> actual = memberRepository.findByUsernameAndAgeGreaterThan("AA", 15);
         //then
-        assertThat(actual).containsExactly(expected);
+        assertThat(actual).containsExactlyElementsOf(expected);
     }
 
     @Test
@@ -165,10 +170,41 @@ public class MemberRepositoryTest {
         Member mem2 = Member.builder().username("AA").age(33).build();
         memberRepository.save(mem1);
         memberRepository.save(mem2);
-        Member expected = mem2;
+        List<Member> expected = Arrays.asList(mem2);
         //when
         List<Member> actual = memberRepository.findUser("AA", 33);
         //then
-        assertThat(actual).containsExactly(expected);
+        assertThat(actual).containsExactlyElementsOf(expected);
+    }
+
+    @Test
+    void memberFindUsernameListTest() {
+        //given
+        List<String> expected = Arrays.asList(memberA.getUsername(), memberB.getUsername(), memberC.getUsername());
+        //when
+        List<String> actual = memberRepository.findUsernameList();
+        //then
+        actual.stream().forEach(name -> log.info("name = " + name));
+        assertThat(actual).containsExactlyElementsOf(expected);
+    }
+
+    @Test
+    void memberFindMemberDtoTest() {
+        //given
+        Team teamA = Team.builder().name("teamA").build();
+        Team teamB = Team.builder().name("teamB").build();
+        teamRepository.save(teamA);
+        teamRepository.save(teamB);
+        memberA.changeTeam(teamA);
+        memberB.changeTeam(teamA);
+        memberC.changeTeam(teamB);
+        List<MemberDto> expected = Arrays.asList(MemberDto.builder().member(memberA).build(),
+                MemberDto.builder().member(memberB).build(),
+                MemberDto.builder().member(memberC).build());
+        //when
+        List<MemberDto> actual = memberRepository.findMemberDto();
+        //then
+        actual.stream().forEach(memberDto -> log.info("memberDto = " + memberDto));
+        assertThat(actual).containsExactlyElementsOf(expected);
     }
 }
