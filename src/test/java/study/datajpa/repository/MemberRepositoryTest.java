@@ -157,4 +157,18 @@ public class MemberRepositoryTest {
         //then
         assertThat(actual).containsExactly(expected);
     }
+
+    @Test
+    void memberRepositoryQueryTest() {
+        //given
+        Member mem1 = Member.builder().username("AA").age(12).build();
+        Member mem2 = Member.builder().username("AA").age(33).build();
+        memberRepository.save(mem1);
+        memberRepository.save(mem2);
+        Member expected = mem2;
+        //when
+        List<Member> actual = memberRepository.findUser("AA", 33);
+        //then
+        assertThat(actual).containsExactly(expected);
+    }
 }
