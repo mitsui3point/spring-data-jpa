@@ -13,6 +13,10 @@ import java.util.Objects;
         name = "Member.findByUsername",
         query = "select m from Member m where m.username = :username " //em.createQuery 와 달리 compile time 구문 error 체킹 가능
 )
+@NamedEntityGraph(
+        name = "Member.all",
+        attributeNodes = @NamedAttributeNode("team")
+)
 public class Member {
     @Id
     @GeneratedValue

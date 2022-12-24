@@ -1,6 +1,7 @@
 package study.datajpa.repository;
 
-import com.fasterxml.jackson.core.JsonGenerator;
+import org.hibernate.Hibernate;
+import org.hibernate.proxy.HibernateProxy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -12,7 +13,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
-import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 import study.datajpa.dto.MemberDto;
 import study.datajpa.entity.Member;
@@ -20,6 +20,7 @@ import study.datajpa.entity.Team;
 
 import javax.persistence.EntityManager;
 import javax.persistence.NonUniqueResultException;
+import javax.persistence.PersistenceUnitUtil;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -451,5 +452,132 @@ public class MemberRepositoryTest {
                     assertThat(actual).isEqualTo(expected);
                 });
         assertThat(updatedCount).isEqualTo(3);
+    }
+
+    @Test
+    void memberFindMembersFetchJoinTest() {
+        //given
+        entityGraphTestDataSet();
+
+        em.flush();
+        em.clear();
+
+        //when
+        memberRepository.findMembersFetchJoin()
+                .stream()
+                .forEach(member -> {//select Member 1, member record(N): N + 1
+                    Team actual = member.getTeam();
+
+                    //then
+                    //FetchType.LAZY, not Apply fetch join: study.datajpa.entity.Team$HibernateProxy$qZsKoHwQ -> proxy instance: 최초 empty instance
+                    assertThat(actual).isNotInstanceOf(HibernateProxy.class);
+                    assertThat(actual).isInstanceOf(Team.class);
+                });
+    }
+
+    @Test
+    void memberEntityGraphFindAllTest() {
+        //given
+        entityGraphTestDataSet();
+
+        em.flush();
+        em.clear();
+
+        //when: override findAll method
+        memberRepository.findAll()
+                .stream()
+                .forEach(member -> {
+                    Team actual = member.getTeam();
+
+                    //then
+                    assertThat(actual).isNotInstanceOf(HibernateProxy.class);
+                    assertThat(actual).isInstanceOf(Team.class);
+                });
+    }
+
+    @Test
+    void memberFindMembersEntityGraphTest() {
+        //given
+        entityGraphTestDataSet();
+
+        em.flush();
+        em.clear();
+
+        //when
+        memberRepository.findMembersEntityGraph()
+                .stream()
+                .forEach(member -> {
+                    Team actual = member.getTeam();
+
+                    //then
+                    assertThat(actual).isNotInstanceOf(HibernateProxy.class);
+                    assertThat(actual).isInstanceOf(Team.class);
+                });
+    }
+
+    @Test
+    void memberFindMembersEntityGraphByUsernameTest() {
+        //given
+        entityGraphTestDataSet();
+
+        em.flush();
+        em.clear();
+
+        //when
+        memberRepository.findMembersEntityGraphByUsername(memberA.getUsername())
+                .stream()
+                .forEach(member -> {//select Member 1, member record(N): N + 1
+                    Team actual = member.getTeam();
+
+                    //then
+                    assertThat(actual).isNotInstanceOf(HibernateProxy.class);
+                    assertThat(actual).isInstanceOf(Team.class);
+                });
+    }
+
+    @Test
+    void memberFindMembersNamedEntityGraphTest() {
+        //given
+        entityGraphTestDataSet();
+
+        em.flush();
+        em.clear();
+
+        //when
+        memberRepository.findMembersNamedEntityGraphByUsername(memberA.getUsername())
+                .stream()
+                .forEach(member -> {
+                    Team actual = member.getTeam();
+
+                    //then
+                    assertThat(actual).isNotInstanceOf(HibernateProxy.class);
+                    assertThat(actual).isInstanceOf(Team.class);
+                });
+    }
+
+    private void entityGraphTestDataSet() {
+        memberRepository.delete(memberA);
+        memberRepository.delete(memberB);
+        memberRepository.delete(memberC);
+
+        Team teamA = Team.builder().name("teamA").build();
+        Team teamB = Team.builder().name("teamB").build();
+        teamRepository.save(teamA);
+        teamRepository.save(teamB);
+
+        Member member1 = Member.builder().username("member1").age(10).team(teamA).build();
+        Member member2 = Member.builder().username("member2").age(20).team(teamB).build();
+        memberRepository.save(member1);
+        memberRepository.save(member2);
+    }
+
+    private boolean isMemberEntityLazyLoad(Member member ) {
+        //참고: 다음과 같이 지연 로딩 여부를 확인할 수 있다.
+        //Hibernate 기능으로 확인
+        //return Hibernate.isInitialized(member.getTeam())
+        //JPA 표준 방법으로 확인
+        return em.getEntityManagerFactory()
+                .getPersistenceUnitUtil()
+                .isLoaded(member.getTeam());
     }
 }
