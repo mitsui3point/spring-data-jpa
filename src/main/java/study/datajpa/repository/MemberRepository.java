@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import study.datajpa.dto.MemberDto;
 import study.datajpa.entity.Member;
 
+import javax.persistence.LockModeType;
 import javax.persistence.QueryHint;
 import java.util.List;
 import java.util.Optional;
@@ -82,4 +83,10 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     @QueryHints(value = @QueryHint(name = "org.hibernate.readOnly", value = "true"))
     Member findReadOnlyByUsername(String username);
+
+    //select for update; 비관적인 lock
+    //db select 시에 다른 것들 손대지 마라.
+    @Lock(LockModeType.PESSIMISTIC_WRITE)//javax.persistence
+    List<Member> findLockByUsername(String username);
+
 }

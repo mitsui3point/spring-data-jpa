@@ -590,6 +590,17 @@ public class MemberRepositoryTest {
         assertThat(actualOriginalUsername).isEqualTo(memberA);
     }
 
+    @Test
+    void lockTest() {
+        //given
+        em.flush();
+        em.clear();
+
+        //when
+        List<Member> result = memberRepository.findLockByUsername(memberA.getUsername());
+        //then
+    }
+
     private boolean isMemberEntityLazyLoad(Member member) {
         //참고: 다음과 같이 지연 로딩 여부를 확인할 수 있다.
         //Hibernate 기능으로 확인
