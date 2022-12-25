@@ -1,6 +1,5 @@
 package study.datajpa.repository;
 
-import org.hibernate.Hibernate;
 import org.hibernate.proxy.HibernateProxy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,7 +19,6 @@ import study.datajpa.entity.Team;
 
 import javax.persistence.EntityManager;
 import javax.persistence.NonUniqueResultException;
-import javax.persistence.PersistenceUnitUtil;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -571,7 +569,28 @@ public class MemberRepositoryTest {
         memberRepository.save(member2);
     }
 
-    private boolean isMemberEntityLazyLoad(Member member ) {
+    @Test
+    void queryHintTest() {
+        //given
+        em.flush();
+        em.clear();
+
+        //when
+        Member changeMemberA = memberRepository.findReadOnlyByUsername(memberA.getUsername());
+        changeMemberA.changeUsername("changeUsername");
+
+        em.flush();//변경감지 동작
+        em.clear();
+
+        Member actualChangeUsername = memberRepository.findReadOnlyByUsername("changeUsername");
+        Member actualOriginalUsername = memberRepository.findReadOnlyByUsername("usernameA");
+
+        //then
+        assertThat(actualChangeUsername).isNull();
+        assertThat(actualOriginalUsername).isEqualTo(memberA);
+    }
+
+    private boolean isMemberEntityLazyLoad(Member member) {
         //참고: 다음과 같이 지연 로딩 여부를 확인할 수 있다.
         //Hibernate 기능으로 확인
         //return Hibernate.isInitialized(member.getTeam())

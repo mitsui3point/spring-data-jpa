@@ -44,6 +44,10 @@ public class Member {
         team.getMembers().add(this);
     }
 
+    public void changeUsername(String username) {
+        this.username = username;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
