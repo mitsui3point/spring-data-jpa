@@ -601,6 +601,16 @@ public class MemberRepositoryTest {
         //then
     }
 
+    @Test
+    void customTest() {
+        //given
+        List<Member> members = Arrays.asList(memberA, memberB, memberC);
+        //when
+        List<Member> actual = memberRepository.findMembersCustom();
+        //then
+        assertThat(actual).isEqualTo(members);
+    }
+
     private boolean isMemberEntityLazyLoad(Member member) {
         //참고: 다음과 같이 지연 로딩 여부를 확인할 수 있다.
         //Hibernate 기능으로 확인
