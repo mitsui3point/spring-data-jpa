@@ -23,7 +23,9 @@ public class MemberDto {
     private MemberDto(Member member) {
         this.id = member.getId();
         this.username = member.getUsername();
-        this.teamName = member.getTeam().getName();
+        if (member.getTeam() != null) {
+            this.teamName = member.getTeam().getName();
+        }
     }
 
     @Override
