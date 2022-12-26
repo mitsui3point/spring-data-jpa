@@ -64,11 +64,11 @@ public class MemberControllerTest {
      * but {@link DataBinder} @code {@link DefaultFormattingConversionService} (mocktest conversionService)
      */
     @Test
-    void findMember2Test() throws Exception {
+    void findDomainClassConverterMemberTest() throws Exception {
         //given
 
         //when
-        ResultActions perform = mvc.perform(get("/members2/1"));
+        ResultActions perform = mvc.perform(get("/members/domain/1"));
         //then
         perform.andDo(print())
                 .andExpect(status().isOk())
