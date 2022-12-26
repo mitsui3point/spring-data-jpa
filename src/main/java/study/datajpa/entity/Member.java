@@ -17,7 +17,7 @@ import java.util.Objects;
         name = "Member.all",
         attributeNodes = @NamedAttributeNode("team")
 )
-public class Member {
+public class Member extends BaseEntity {
     @Id
     @GeneratedValue
     private Long id;

@@ -11,7 +11,7 @@ import java.util.Objects;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @ToString(of = {"id", "name"})
-public class Team {
+public class Team extends BaseEntity {
     @Id
     @GeneratedValue
     @Column(name = "team_id")
@@ -33,7 +33,7 @@ public class Team {
         if (o == null || getClass() != o.getClass()) return false;
         Team team = (Team) o;
         return Objects.equals(getId(), team.getId()) && Objects.equals(getName(), team.getName());
-                //&& Objects.equals(getMembers(), team.getMembers());
+        //&& Objects.equals(getMembers(), team.getMembers());
     }
 
     @Override
