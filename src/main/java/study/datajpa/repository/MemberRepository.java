@@ -8,8 +8,7 @@ import org.springframework.data.repository.query.Param;
 import study.datajpa.dto.MemberDto;
 import study.datajpa.entity.Member;
 import study.datajpa.repository.custom.MemberRepositoryCustom;
-import study.datajpa.repository.projection.UsernameAndAge;
-import study.datajpa.repository.projection.UsernameAndAgeDto;
+import study.datajpa.repository.nativequery.MemberProjection;
 
 import javax.persistence.LockModeType;
 import javax.persistence.QueryHint;
@@ -89,8 +88,21 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberRep
 
     //select for update; 비관적인 lock
     //db select 시에 다른 것들 손대지 마라.
-    @Lock(LockModeType.PESSIMISTIC_WRITE)//javax.persistence
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+//javax.persistence
     List<Member> findLockByUsername(String username);
 
     <T> List<T> findProjectionsByUsername(@Param("username") String username, Class<T> T);
+
+    @Query(value = "select * from member where username = ? ", nativeQuery = true)
+    Member findByNativeQuery(String username);
+
+    @Query(value = "select m.id as id," +
+            "m.username ," +
+            "t.name as teamName " +
+            "from member m " +
+            "left join team t ",
+            countQuery = "select count(*) from member",
+            nativeQuery = true)
+    Page<MemberProjection> findByNativeProjections(Pageable pageable);
 }

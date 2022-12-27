@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import study.datajpa.dto.MemberDto;
 import study.datajpa.entity.Member;
 import study.datajpa.entity.Team;
+import study.datajpa.repository.nativequery.MemberProjection;
 import study.datajpa.repository.projection.NestedClosedProjections;
 import study.datajpa.repository.projection.UsernameAndAge;
 import study.datajpa.repository.projection.UsernameAndAgeDto;
@@ -733,6 +734,42 @@ public class MemberRepositoryTest {
             log.info("name = " + name);
         });
         assertThat(actual.get(0).getUsername()).isEqualTo(m1.getUsername());
+    }
+
+    @Test
+    void nativeQueryTest() {
+        //given
+        em.persist(teamA);
+        em.persist(m1);
+        em.persist(m2);
+        em.flush();
+        em.clear();
+
+        //when
+        Member actual = memberRepository.findByNativeQuery(m1.getUsername());
+        //then
+        assertThat(actual).isEqualTo(m1);
+    }
+
+    @Test
+    void nativeProjectionsTest() {
+        //given
+        em.persist(teamA);
+        em.persist(m1);
+        em.persist(m2);
+        em.flush();
+        em.clear();
+        //when
+        Page<MemberProjection> actual = memberRepository.findByNativeProjections(
+                PageRequest.of(0,
+                        10,
+                        Sort.by(Sort.Direction.DESC, "username")));
+        //then
+        actual.forEach(memberProjection -> {
+            System.out.println("memberProjection = " + memberProjection.getId());
+            System.out.println("memberProjection = " + memberProjection.getTeamName());
+            System.out.println("memberProjection = " + memberProjection.getUsername());
+        });
     }
 
     private boolean isMemberEntityLazyLoad(Member member) {
