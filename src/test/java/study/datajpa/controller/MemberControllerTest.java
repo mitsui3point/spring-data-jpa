@@ -26,14 +26,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
-@AutoConfigureMockMvc
 public class MemberControllerTest {
 
 
-    public static final String FIND_DOMAIN_CLASS_CONVERTER_MEMBER = "/members/domain/{}";
+    public static final String FIND_DOMAIN_CLASS_CONVERTER_MEMBER = "/members/domain/";
     public static final String FIND_PAGING_MEMBERS = "/members";
-    private static final String FIND_MEMBER = "/members/{}";
-    @Autowired
+    private static final String FIND_MEMBER = "/members/";
     private MockMvc mvc;
     @Autowired
     private WebApplicationContext context;
@@ -63,11 +61,11 @@ public class MemberControllerTest {
         //given
 
         //when
-        ResultActions perform = mvc.perform(get(FIND_MEMBER, 1));
+        ResultActions perform = mvc.perform(get(FIND_MEMBER + 1));
         //then
         perform.andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(content().string("username1"));
+                .andExpect(content().string("username0"));
     }
 
     /**
@@ -81,18 +79,18 @@ public class MemberControllerTest {
         //given
 
         //when
-        ResultActions perform = mvc.perform(get(FIND_DOMAIN_CLASS_CONVERTER_MEMBER, 1));
+        ResultActions perform = mvc.perform(get(FIND_DOMAIN_CLASS_CONVERTER_MEMBER + 1));
         //then
         perform.andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(content().string("username1"));
+                .andExpect(content().string("username0"));
     }
 
     @Test
     void findMembersTest() throws Exception {
         //given
         int page = 4;
-        int size = 5;
+        int size = 12;
         String sort1 = "id";
         String sort2 = "username";
         String direction = "desc";

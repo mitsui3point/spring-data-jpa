@@ -37,10 +37,11 @@ public class MemberController {
 
     @GetMapping("/members")
     public Page<MemberDto> findMembers(
-            @Qualifier("member")
-            @PageableDefault(size = 12,
-                    sort = "username",
-                    direction = Sort.Direction.DESC) Pageable pageable) {
+//            @Qualifier("member")
+//            @PageableDefault(size = 12,
+//                    sort = "username",
+//                    direction = Sort.Direction.DESC)
+            Pageable pageable) {
         return memberRepository.findAll(pageable)
                 .map(m -> MemberDto.builder()
                         .member(m)
