@@ -14,6 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 import study.datajpa.dto.MemberDto;
 import study.datajpa.entity.Member;
 import study.datajpa.entity.Team;
+import study.datajpa.repository.projection.NestedClosedProjections;
+import study.datajpa.repository.projection.UsernameAndAge;
+import study.datajpa.repository.projection.UsernameAndAgeDto;
 import study.datajpa.repository.spec.MemberSpec;
 
 import javax.persistence.EntityManager;
@@ -54,6 +57,10 @@ public class MemberRepositoryTest {
     private Member mem4;
     private Member mem5;
 
+    private Team teamA;
+    private Member m1;
+    private Member m2;
+
     @BeforeEach
     void setUp() {
         init();
@@ -64,9 +71,15 @@ public class MemberRepositoryTest {
         memberA = Member.builder().username("usernameA").age(10).build();
         memberB = Member.builder().username("usernameB").age(20).build();
         memberC = Member.builder().username("usernameC").age(30).build();
+
         savedMemberA = memberRepository.save(memberA);
         savedMemberB = memberRepository.save(memberB);
         savedMemberC = memberRepository.save(memberC);
+
+        teamA = Team.builder().name("teamA").build();
+
+        m1 = Member.builder().username("m1").age(0).team(teamA).build();
+        m2 = Member.builder().username("m2").age(0).team(teamA).build();
     }
 
     private void membersDataSave() {
@@ -636,12 +649,7 @@ public class MemberRepositoryTest {
     @Test
     void queryByExampleTest() {
         //given
-        Team teamA = Team.builder().name("teamA").build();
         em.persist(teamA);
-
-        Member m1 = Member.builder().username("m1").age(0).team(teamA).build();
-        Member m2 = Member.builder().username("m2").age(0).team(teamA).build();
-        List<Member> expected = Arrays.asList(m1);
         em.persist(m1);
         em.persist(m2);
 
@@ -664,6 +672,68 @@ public class MemberRepositoryTest {
         assertThat(actual).isEqualTo(Arrays.asList(m1));
     }
 
+    @Test
+    void projectionsTest() {
+        //given
+        em.persist(teamA);
+        em.persist(m1);
+        em.persist(m2);
+
+        em.flush();
+        em.clear();
+
+        //when
+        List<UsernameAndAge> actual = memberRepository.findProjectionsByUsername(m1.getUsername(), UsernameAndAge.class);
+
+        //then
+        actual.forEach(actualMember -> {
+            log.info("actualMember: {}", actualMember);
+        });
+        assertThat(actual.get(0).getUsername()).isEqualTo(m1.getUsername());
+        assertThat(actual.get(0).getAge()).isEqualTo(m1.getAge());
+    }
+
+    @Test
+    void projectionsDtoTest() {
+        //given
+        em.persist(teamA);
+        em.persist(m1);
+        em.persist(m2);
+        em.flush();
+        em.clear();
+
+        //when
+        List<UsernameAndAgeDto> actual = memberRepository.findProjectionsByUsername(m1.getUsername(), UsernameAndAgeDto.class);
+
+        //then
+        actual.forEach(actualDtoMember -> {
+            log.info("actualDtoMember: {}", actualDtoMember);
+        });
+        assertThat(actual.get(0).getUsername()).isEqualTo(m1.getUsername());
+        assertThat(actual.get(0).getAge()).isEqualTo(m1.getAge());
+    }
+
+    @Test
+    void nestedClosedProjectionsTest() {
+        //given
+        em.persist(teamA);
+        em.persist(m1);
+        em.persist(m2);
+        em.flush();
+        em.clear();
+
+        //when
+        List<NestedClosedProjections> actual = memberRepository.findProjectionsByUsername(m1.getUsername(), NestedClosedProjections.class);
+
+        //then
+        actual.forEach(actualMember -> {
+            String username = actualMember.getUsername();
+            log.info("username = " + username);
+            String name = actualMember.getTeam().getName();
+            log.info("name = " + name);
+        });
+        assertThat(actual.get(0).getUsername()).isEqualTo(m1.getUsername());
+    }
 
     private boolean isMemberEntityLazyLoad(Member member) {
         //참고: 다음과 같이 지연 로딩 여부를 확인할 수 있다.
