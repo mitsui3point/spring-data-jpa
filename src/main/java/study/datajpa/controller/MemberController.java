@@ -21,7 +21,7 @@ public class MemberController {
     private final MemberRepository memberRepository;
 
     @GetMapping("/members/{id}")
-    public String findMember(@PathVariable(value = "id") Long id) {
+    public String findMember(@PathVariable("id") Long id) {
         return memberRepository.findById(id)
                 .orElseGet(() -> Member.builder()
                         .username("not exists user")
