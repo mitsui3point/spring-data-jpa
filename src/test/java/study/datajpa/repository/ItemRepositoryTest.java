@@ -18,6 +18,5 @@ public class ItemRepositoryTest {
         //when
         Item saveItem = itemRepository.save(item);
         //then
-
     }
 }

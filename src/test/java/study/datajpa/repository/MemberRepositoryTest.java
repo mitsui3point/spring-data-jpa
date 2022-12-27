@@ -12,10 +12,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.transaction.annotation.Transactional;
 import study.datajpa.dto.MemberDto;
 import study.datajpa.entity.Member;
 import study.datajpa.entity.Team;
+import study.datajpa.repository.spec.MemberSpec;
 
 import javax.persistence.EntityManager;
 import javax.persistence.NonUniqueResultException;
@@ -611,6 +613,29 @@ public class MemberRepositoryTest {
         assertThat(actual).isEqualTo(members);
     }
 
+    @Test
+    void specBasicTest() {
+        //given
+        Team teamA = Team.builder().name("teamA").build();
+        em.persist(teamA);
+
+        Member m1 = Member.builder().username("m1").age(0).team(teamA).build();
+        Member m2 = Member.builder().username("m2").age(0).team(teamA).build();
+        List<Member> expected = Arrays.asList(m1);
+        em.persist(m1);
+        em.persist(m2);
+
+        em.flush();
+        em.clear();
+
+        //when
+        Specification<Member> spec = MemberSpec.username("m1").and(MemberSpec.teamName("teamA"));
+        List<Member> actual = memberRepository.findAll(spec);
+
+        //then
+        assertThat(actual).isEqualTo(expected);
+    }
+
     private boolean isMemberEntityLazyLoad(Member member) {
         //참고: 다음과 같이 지연 로딩 여부를 확인할 수 있다.
         //Hibernate 기능으로 확인
@@ -620,6 +645,4 @@ public class MemberRepositoryTest {
                 .getPersistenceUnitUtil()
                 .isLoaded(member.getTeam());
     }
-
-
 }
