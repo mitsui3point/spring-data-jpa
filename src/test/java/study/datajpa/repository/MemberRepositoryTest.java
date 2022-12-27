@@ -8,10 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.transaction.annotation.Transactional;
 import study.datajpa.dto.MemberDto;
@@ -635,6 +632,38 @@ public class MemberRepositoryTest {
         //then
         assertThat(actual).isEqualTo(expected);
     }
+
+    @Test
+    void queryByExampleTest() {
+        //given
+        Team teamA = Team.builder().name("teamA").build();
+        em.persist(teamA);
+
+        Member m1 = Member.builder().username("m1").age(0).team(teamA).build();
+        Member m2 = Member.builder().username("m2").age(0).team(teamA).build();
+        List<Member> expected = Arrays.asList(m1);
+        em.persist(m1);
+        em.persist(m2);
+
+        em.flush();
+        em.clear();
+
+        //when
+        //Probe 생성
+        Member member = Member.builder().username("m1").build();//검색조건
+        Team team = Team.builder().name("teamA").build();
+        member.changeTeam(team);
+
+        //ExampleMatcher 생성, age 프로퍼티는 무시
+        ExampleMatcher matcher = ExampleMatcher.matching().withIgnorePaths("age");//검색제외조건
+
+        Example<Member> example = Example.of(member, matcher);
+        List<Member> actual = memberRepository.findAll(example);//QueryByExampleExecutor
+
+        //then
+        assertThat(actual).isEqualTo(Arrays.asList(m1));
+    }
+
 
     private boolean isMemberEntityLazyLoad(Member member) {
         //참고: 다음과 같이 지연 로딩 여부를 확인할 수 있다.
